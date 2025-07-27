@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Resume CV Analyzer{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Animated Background -->
+<div class="hero-section position-relative overflow-hidden py-5">
+    <div class="animated-bg"></div>
+    <div class="container position-relative">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <div class="badge-container mb-4">
+                        <span class="hero-badge">
+                            <i class="fas fa-star me-2"></i>AI-Powered Analysis
+                        </span>
+                    </div>
+                    <h1 class="hero-title mb-4">
+                        Transform Your 
+                        <span class="text-gradient">Resume</span>
+                        Into Success
+                    </h1>
+                    <p class="hero-subtitle mb-5">
+                        Get instant AI-powered insights, match scores, and personalized recommendations 
+                        to land your dream job. Upload your resume and let our smart analyzer do the magic.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="{% url 'upload' %}" class="btn btn-primary btn-lg me-3 pulse-btn">
+                            <i class="fas fa-rocket me-2"></i>Start Free Analysis
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-lg mt-3">
+                            <i class="fas fa-play-circle me-2"></i>See How It Works
+                        </a>
+                    </div>                                                                           
+                    <div class="hero-stats mt-5">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-number">10K+</div>
+                                <div class="stat-label">Resumes Analyzed</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-number">95%</div>
+                                <div class="stat-label">Accuracy Rate</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-number">24/7</div>
+                                <div class="stat-label">AI Assistant</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-visual">
+                    <div class="floating-cards">
+                        <div class="floating-card card-1">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Resume</span>
+                        </div>
+                        <div class="floating-card card-2">
+                            <i class="fas fa-brain"></i>
+                            <span>AI Analysis</span>
+                        </div>
+                        <div class="floating-card card-3">
+                            <i class="fas fa-chart-line"></i>
+                            <span>95% Match</span>
+                        </div>
+                        <div class="floating-card card-4">
+                            <i class="fas fa-trophy"></i>
+                            <span>Success</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Powerful Features</h2>
+            <p class="section-subtitle">Everything you need to create the perfect resume</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fas fa-file-upload feature-icon"></i>
+                    </div>
+                    <h5 class="feature-title">Smart Upload</h5>
+                    <p class="feature-description">
+                        Upload your resume in PDF or DOCX format. Our advanced AI extracts 
+                        and analyzes every detail with 99% accuracy.
+                    </p>
+                    <div class="feature-tech">
+                        <span class="tech-badge">PDF</span>
+                        <span class="tech-badge">DOCX</span>
+                        <span class="tech-badge">OCR</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fas fa-bullseye feature-icon"></i>
+                    </div>
+                    <h5 class="feature-title">Precision Matching</h5>
+                    <p class="feature-description">
+                        Get detailed match scores comparing your resume with job descriptions. 
+                        See exactly where you stand and what's missing.
+                    </p>
+                    <div class="feature-tech">
+                        <span class="tech-badge">NLP</span>
+                        <span class="tech-badge">ML</span>
+                        <span class="tech-badge">Scoring</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fas fa-robot feature-icon"></i>
+                    </div>
+                    <h5 class="feature-title">AI Assistant</h5>
+                    <p class="feature-description">
+                        Chat with our intelligent AI assistant for personalized recommendations, 
+                        tips, and instant answers about your analysis.
+                    </p>
+                    <div class="feature-tech">
+                        <span class="tech-badge">GPT</span>
+                        <span class="tech-badge">Chat</span>
+                        <span class="tech-badge">24/7</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Simple steps to supercharge your resume</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <h6 class="step-title">Upload Resume</h6>
+                    <p class="step-description">Upload your resume and paste the job description</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h6 class="step-title">AI Analysis</h6>
+                    <p class="step-description">Our AI processes and analyzes your content</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h6 class="step-title">Get Insights</h6>
+                    <p class="step-description">Receive detailed scores and recommendations</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <div class="step-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h6 class="step-title">Land Job</h6>
+                    <p class="step-description">Improve and apply with confidence</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="cta-title mb-4">Ready to Boost Your Career?</h2>
+                <p class="cta-subtitle mb-5">
+                    Join thousands of professionals who have already improved their resumes with our AI-powered analyzer.
+                </p>
+                <a href="{% url 'upload' %}" class="btn btn-primary btn-lg cta-btn">
+                    <i class="fas fa-rocket me-2"></i>Start Your Free Analysis Now
+                </a>
+                <div class="cta-features mt-4">
+                    <span class="cta-feature">
+                        <i class="fas fa-check me-2"></i>Free to use
+                    </span>
+                    <span class="cta-feature">
+                        <i class="fas fa-check me-2"></i>Instant results
+                    </span>
+                    <span class="cta-feature">
+                        <i class="fas fa-check me-2"></i>No registration required
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
