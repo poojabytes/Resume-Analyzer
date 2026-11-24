@@ -1,281 +1,195 @@
-import fitz  # PyMuPDF
-from docx import Document
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+"""Resume analysis helpers with lightweight dependencies for Vercel."""
+from __future__ import annotations
+
+import math
 import re
-import json
-import numpy as np
+from collections import Counter
 
-# Download required NLTK data
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+from docx import Document
+from pypdf import PdfReader
 
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
 
 class TextExtractor:
     @staticmethod
     def extract_from_pdf(file_path):
-        """Extract text from PDF file"""
         try:
-            doc = fitz.open(file_path)
-            text = ""
-            for page in doc:
-                text += page.get_text()
-            doc.close()
-            return text
+            reader = PdfReader(file_path)
+            return "\n".join((page.extract_text() or "") for page in reader.pages)
         except Exception as e:
             return f"Error extracting PDF: {str(e)}"
-    
+
     @staticmethod
     def extract_from_docx(file_path):
-        """Extract text from DOCX file"""
         try:
             doc = Document(file_path)
-            text = ""
-            for paragraph in doc.paragraphs:
-                text += paragraph.text + "\n"
-            return text
+            return "\n".join(paragraph.text for paragraph in doc.paragraphs)
         except Exception as e:
             return f"Error extracting DOCX: {str(e)}"
 
+
 class TextPreprocessor:
-    def __init__(self):
-        self.stop_words = set(stopwords.words('english'))
-    
+    STOP_WORDS = {
+        "the", "and", "for", "with", "that", "this", "from", "your", "have", "are",
+        "was", "were", "will", "would", "could", "should", "about", "into", "over",
+        "under", "their", "there", "them", "then", "than", "also", "such", "only",
+    }
+
     def clean_text(self, text):
-        """Clean and preprocess text"""
-        # Convert to lowercase
-        text = text.lower()
-        
-        # Remove special characters and digits
-        text = re.sub(r'[^a-zA-Z\s]', '', text)
-        
-        # Tokenize
-        tokens = word_tokenize(text)
-        
-        # Remove stopwords
-        tokens = [token for token in tokens if token not in self.stop_words and len(token) > 2]
-        
-        return ' '.join(tokens)
+        text = (text or "").lower()
+        text = re.sub(r"[^a-zA-Z\s]", " ", text)
+        tokens = [t for t in text.split() if t not in self.STOP_WORDS and len(t) > 2]
+        return " ".join(tokens)
+
 
 class SkillExtractor:
     def __init__(self):
-        # Common technical skills - you can expand this list
         self.skills_database = [
-            # Programming Languages
-            'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'php', 'ruby', 'go', 'swift',
-            'kotlin', 'scala', 'r programming', 'r language', 'matlab', 'perl', 'shell', 'bash',
-            
-            # Web Technologies
-            'html', 'css', 'react', 'angular', 'vue', 'nodejs', 'express', 'django', 'flask',
-            'spring', 'laravel', 'bootstrap', 'jquery', 'ajax',
-            
-            # Databases
-            'mysql', 'postgresql', 'mongodb', 'redis', 'sqlite', 'oracle', 'cassandra',
-            'elasticsearch', 'firebase',
-            
-            # Cloud & DevOps
-            'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git', 'gitlab', 'github',
-            'terraform', 'ansible', 'chef', 'puppet',
-            
-            # Data Science & ML
-            'machine learning', 'deep learning', 'artificial intelligence', 'data science',
-            'pandas', 'numpy', 'scikit-learn', 'tensorflow', 'pytorch', 'keras',
-            'tableau', 'power bi', 'excel',
-            
-            # Other Technologies
-            'rest api', 'graphql', 'microservices', 'agile', 'scrum', 'jira', 'confluence',
-            'linux', 'unix', 'windows server', 'networking', 'cybersecurity'
+            "python", "java", "javascript", "typescript", "c++", "c#", "php", "ruby", "go",
+            "swift", "kotlin", "html", "css", "react", "angular", "vue", "nodejs", "express",
+            "django", "flask", "spring", "laravel", "bootstrap", "jquery", "sql", "mysql",
+            "postgresql", "mongodb", "redis", "aws", "azure", "gcp", "docker", "kubernetes",
+            "git", "linux", "fastapi", "rest", "graphql", "machine learning", "deep learning",
+            "nlp", "pandas", "numpy", "tensorflow", "pytorch", "scikit-learn", "tailwind",
+            "nextjs", "nestjs", "prisma", "selenium", "jest", "cypress", "jira", "agile",
         ]
-    
+
     def extract_skills(self, text):
-        """Extract skills from text with improved context-aware matching"""
-        text_lower = text.lower()
-        found_skills = []
-        
-        import re
-        
-        # Special handling for programming languages that are single letters
-        special_patterns = {
-            'r programming': r'\br\s*(programming|language|lang)\b',
-            'r language': r'\br\s*(programming|language|lang)\b',
-            'c programming': r'\bc\s*(programming|language|lang)\b',
-            'c language': r'\bc\s*(programming|language|lang)\b'
-        }
-        
+        cleaned = (text or "").lower()
+        found = []
         for skill in self.skills_database:
-            # Check special patterns first
-            if skill in special_patterns:
-                if re.search(special_patterns[skill], text_lower):
-                    found_skills.append(skill.split()[0])  # Add just 'r' or 'c'
-                continue
-            
-            # For very short skills (1-2 characters), use word boundary
-            if len(skill) <= 2:
-                pattern = r'\b' + re.escape(skill) + r'\b'
-                if re.search(pattern, text_lower):
-                    found_skills.append(skill)
-            else:
-                # For longer skills, use simple substring match
-                if skill in text_lower:
-                    found_skills.append(skill)
-        
-        return list(set(found_skills))  # Remove duplicates
+            pattern = r"\b" + re.escape(skill.lower()) + r"\b"
+            if re.search(pattern, cleaned):
+                found.append(skill)
+        return sorted(set(found))
+
 
 class SimilarityCalculator:
     def __init__(self):
-        self.vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
-    
-    def calculate_similarity(self, resume_text, job_text):
-        """Calculate similarity between resume and job description"""
-        try:
-            documents = [resume_text, job_text]
-            tfidf_matrix = self.vectorizer.fit_transform(documents)
-            similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
-            return float(similarity[0][0]) * 100  # Convert to percentage
-        except:
+        self.preprocessor = TextPreprocessor()
+
+    @staticmethod
+    def _tfidf_vectors(docs):
+        tokenized = [doc.split() for doc in docs]
+        df = Counter()
+        for tokens in tokenized:
+            df.update(set(tokens))
+        n_docs = len(docs)
+        vectors = []
+        for tokens in tokenized:
+            tf = Counter(tokens)
+            total = len(tokens) or 1
+            vec = {}
+            for term, count in tf.items():
+                idf = math.log((1 + n_docs) / (1 + df[term])) + 1.0
+                vec[term] = (count / total) * idf
+            vectors.append(vec)
+        return vectors
+
+    @staticmethod
+    def _cosine(a, b):
+        keys = set(a) | set(b)
+        if not keys:
             return 0.0
+        dot = sum(a.get(k, 0.0) * b.get(k, 0.0) for k in keys)
+        na = math.sqrt(sum(v * v for v in a.values())) or 1.0
+        nb = math.sqrt(sum(v * v for v in b.values())) or 1.0
+        return float(dot / (na * nb))
+
+    def calculate_similarity(self, resume_text, job_text):
+        resume_clean = self.preprocessor.clean_text(resume_text)
+        job_clean = self.preprocessor.clean_text(job_text)
+        vectors = self._tfidf_vectors([resume_clean, job_clean])
+        return self._cosine(vectors[0], vectors[1])
+
 
 class AnalysisEngine:
     def __init__(self):
-        self.text_processor = TextPreprocessor()
         self.skill_extractor = SkillExtractor()
         self.similarity_calculator = SimilarityCalculator()
-    
+
     def analyze_resume_job_match(self, resume_text, job_text, job_required_skills=None):
-        """Complete analysis of resume vs job description"""
-        
-        # Extract skills
         resume_skills = self.skill_extractor.extract_skills(resume_text)
         job_skills = self.skill_extractor.extract_skills(job_text)
-        
         if job_required_skills:
-            job_skills.extend(job_required_skills)
-            job_skills = list(set(job_skills))  # Remove duplicates
-        
-        # Calculate matches
-        matched_skills = list(set(resume_skills) & set(job_skills))
-        missing_skills = list(set(job_skills) - set(resume_skills))
-        
-        # Calculate match score
-        if job_skills:
-            match_score = (len(matched_skills) / len(job_skills)) * 100
-        else:
-            match_score = 0
-        
-        # Calculate text similarity
+            job_skills = sorted(set(job_skills) | {s.lower() for s in job_required_skills})
+
+        matched_skills = sorted(set(resume_skills) & set(job_skills))
+        missing_skills = sorted(set(job_skills) - set(resume_skills))
+
         similarity_score = self.similarity_calculator.calculate_similarity(resume_text, job_text)
-        
-        # Generate recommendations
+        similarity_pct = round(similarity_score * 100, 2)
+        skill_score = (len(matched_skills) / len(job_skills) * 100) if job_skills else 50.0
+        match_score = round((similarity_pct * 0.6) + (skill_score * 0.4), 2)
+
         recommendations = self.generate_recommendations(matched_skills, missing_skills, match_score)
-        
+
         return {
-            'match_score': round(match_score, 2),
-            'similarity_score': round(similarity_score, 2),
-            'matched_skills': matched_skills,
-            'missing_skills': missing_skills,
-            'resume_skills': resume_skills,
-            'job_skills': job_skills,
-            'recommendations': recommendations
+            "match_score": match_score,
+            "similarity_score": similarity_pct,
+            "matched_skills": matched_skills,
+            "missing_skills": missing_skills,
+            "recommendations": recommendations,
+            "resume_skills": resume_skills,
+            "job_skills": job_skills,
         }
-    
+
     def generate_recommendations(self, matched_skills, missing_skills, match_score):
-        """Generate improvement recommendations"""
         recommendations = []
-        
-        if match_score < 30:
-            recommendations.append("Your resume has low compatibility with this job. Consider gaining more relevant skills.")
-        elif match_score < 60:
-            recommendations.append("Your resume shows moderate compatibility. Focus on highlighting relevant experience.")
-        else:
-            recommendations.append("Great match! Your skills align well with the job requirements.")
-        
         if missing_skills:
-            if len(missing_skills) <= 3:
-                recommendations.append(f"Consider learning: {', '.join(missing_skills[:3])}")
-            else:
-                recommendations.append(f"Top missing skills to focus on: {', '.join(missing_skills[:5])}")
-        
+            recommendations.append(
+                "Consider adding these skills if relevant: " + ", ".join(missing_skills[:8])
+            )
+        if match_score < 60:
+            recommendations.append(
+                "Rewrite your summary to mirror important keywords from the job description."
+            )
         if matched_skills:
-            recommendations.append(f"Highlight these matching skills in your resume: {', '.join(matched_skills[:5])}")
-        
-        return '\n'.join(recommendations)
+            recommendations.append(
+                "Highlight impact for these matched skills: " + ", ".join(matched_skills[:6])
+            )
+        if not recommendations:
+            recommendations.append("Strong overlap — keep quantifying outcomes for your top skills.")
+        return recommendations
+
 
 class ChatBot:
     def __init__(self, analysis_data=None):
         self.analysis_data = analysis_data or {}
-    
+
     def process_message(self, message):
-        """Process user message and return response"""
-        message_lower = message.lower()
-        
-        # Skill-related questions
-        if any(word in message_lower for word in ['skill', 'skills', 'missing', 'lack']):
-            return self.handle_skills_query(message_lower)
-        
-        # Score-related questions
-        elif any(word in message_lower for word in ['score', 'match', 'percentage', '%']):
+        msg = (message or "").lower()
+        if any(w in msg for w in ["skill", "missing", "match"]):
+            return self.handle_skills_query(msg)
+        if any(w in msg for w in ["score", "similarity", "percent"]):
             return self.handle_score_query()
-        
-        # Improvement suggestions
-        elif any(word in message_lower for word in ['improve', 'recommendation', 'suggest', 'advice']):
+        if any(w in msg for w in ["improve", "recommend", "suggestion", "tip"]):
             return self.handle_improvement_query()
-        
-        # General questions
-        elif any(word in message_lower for word in ['resume', 'cv', 'job', 'position']):
-            return self.handle_general_query()
-        
-        else:
-            return self.default_response()
-    
+        return self.handle_general_query()
+
     def handle_skills_query(self, message):
-        if not self.analysis_data:
-            return "Please upload a resume and job description first to get skill analysis."
-        
-        missing_skills = self.analysis_data.get('missing_skills', [])
-        matched_skills = self.analysis_data.get('matched_skills', [])
-        
-        if 'missing' in message or 'lack' in message:
-            if missing_skills:
-                return f"Missing skills from your resume: {', '.join(missing_skills[:10])}"
-            else:
-                return "Great! You have all the required skills for this position."
-        else:
-            if matched_skills:
-                return f"Skills you have that match the job: {', '.join(matched_skills[:10])}"
-            else:
-                return "No matching skills found. Consider updating your resume with more relevant skills."
-    
+        matched = self.analysis_data.get("matched_skills") or []
+        missing = self.analysis_data.get("missing_skills") or []
+        return (
+            f"Matched skills: {', '.join(matched) if matched else 'none yet'}. "
+            f"Missing skills: {', '.join(missing) if missing else 'none detected'}."
+        )
+
     def handle_score_query(self):
-        if not self.analysis_data:
-            return "Please upload a resume and job description first to get match scores."
-        
-        match_score = self.analysis_data.get('match_score', 0)
-        similarity_score = self.analysis_data.get('similarity_score', 0)
-        
-        return f"Your resume match score is {match_score}% and similarity score is {similarity_score}%. " + \
-               f"{'Excellent match!' if match_score > 70 else 'Good potential!' if match_score > 40 else 'Consider improving your resume.'}"
-    
+        match_score = self.analysis_data.get("match_score", "N/A")
+        similarity = self.analysis_data.get("similarity_score", "N/A")
+        return f"Your match score is {match_score}% and content similarity is {similarity}%."
+
     def handle_improvement_query(self):
-        if not self.analysis_data:
-            return "Upload your resume and job description first, then I can provide personalized recommendations."
-        
-        recommendations = self.analysis_data.get('recommendations', '')
-        if recommendations:
-            return f"Here are my recommendations:\n\n{recommendations}"
-        else:
-            return "Based on your analysis, focus on highlighting your matching skills and consider learning the missing ones."
-    
+        recs = self.analysis_data.get("recommendations") or []
+        if not recs:
+            return "No recommendations available yet. Run an analysis first."
+        return "Suggestions: " + " ".join(recs)
+
     def handle_general_query(self):
-        return "I can help you analyze your resume against job descriptions. Upload both files and I'll provide detailed insights about skill matches, scores, and improvement suggestions."
-    
+        return self.default_response()
+
     def default_response(self):
-        return "I can help you with:\n• Skill analysis (matched/missing skills)\n• Match scores and similarity\n• Improvement recommendations\n• General resume advice\n\nWhat would you like to know?"
+        return (
+            "Ask me about your match score, missing skills, or improvement tips "
+            "based on the latest resume analysis."
+        )
